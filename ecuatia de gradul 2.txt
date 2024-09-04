@@ -1,0 +1,418 @@
+.model small
+.stack 100h
+.data
+    msg1 db "Ecuatie: ax^2+bx+c $"
+    msg2 db "Introdu variabila a: $"
+    msg3 db "Introdu variabila b: $"
+    msg4 db "Introdu variabila c: $"
+	msg5 db "  Radical din delta= $"
+	msgFaraSol db "Ecuatia nu are solutii reale $"
+	msgSol1 db "Prima sol este: $"
+	msgSol2 db "  A doua sol este: $"
+    num1 dw 0
+    num2 dw 0
+    num3 dw 0	
+    delta dw 0
+	x1 dw 0
+	x2 dw 0
+    estimare dw 2
+	rezultat dw 0
+	nrcifre dw 0
+	
+.code
+
+	altaAfisareCaracter proc
+		mov ah, 02
+		int 21h
+		ret
+	altaAfisareCaracter endp
+	
+    main:
+        mov ax, @data
+        mov ds, ax
+		
+		afisareCaracter macro caracter
+			mov dl, caracter
+			mov ah, 02h
+			int 21h
+		
+		endm
+		
+        mov dx, offset msg1 
+        mov ah, 9 
+        int 21h
+
+        mov cx, 10
+        mov bh, 0
+
+			mov dx, offset msg2
+			mov ah, 9 
+			int 21h
+			
+        citire1:
+		
+            mov ah, 01h
+            int 21h
+			
+            cmp al, 13
+            je citire2
+			
+			cmp al, 45
+			je negCitire1
+			
+
+            sub al, 48
+            mov bl, al
+            mov ax, num1
+            mul cx     
+            add ax, bx
+
+            mov num1, ax
+
+        jmp citire1
+		
+		
+		negCitire1:
+			mov ah, 01h
+            int 21h
+			
+			cmp al, 13
+            je endOfNegCitire1
+			
+			sub al, 48
+            mov bl, al
+            mov ax, num1
+            mul cx     
+            add ax, bx
+
+            mov num1, ax
+			
+		jmp negCitire1	
+			
+		
+		endOfNegCitire1:
+			neg num1
+		jmp citire2	
+		
+
+        citire2:
+		
+			mov dx, offset msg3
+			mov ah, 9 
+			int 21h
+			
+			citireVar2:	
+            mov ah, 01h
+            int 21h
+
+            cmp al, 13
+            je citire3
+			
+			cmp al, 45
+			je negCitire2
+
+            sub al, 48	
+            mov bl, al
+            mov ax, num2
+            mul cx     
+            add ax, bx
+
+            mov num2, ax
+
+		jmp citireVar2
+		
+		negCitire2:
+			mov ah, 01h
+            int 21h
+			
+			cmp al, 13
+            je endOfNegCitire2
+			
+			sub al, 48
+            mov bl, al
+            mov ax, num2
+            mul cx     
+            add ax, bx
+
+            mov num2, ax
+		jmp negCitire2
+		
+		
+		endOfNegCitire2:
+			neg num2
+		jmp citire3
+		
+        citire3:
+			mov dx, offset msg4
+			mov ah, 9  
+			int 21h
+			
+			citireVar3:
+            mov ah, 01h
+            int 21h
+
+            cmp al, 13
+            je deltae
+			
+			cmp al,45
+			je negCitire3
+
+            sub al, 48
+            mov bl, al
+            mov ax, num3
+            mul cx     
+            add ax, bx
+
+            mov num3, ax
+
+        jmp citireVar3
+		
+		negCitire3:
+			mov ah, 01h
+            int 21h
+			
+			cmp al, 13
+            je endOfNegCitire3
+			
+			sub al, 48
+            mov bl, al
+            mov ax, num3
+            mul cx     
+            add ax, bx
+
+            mov num3, ax
+		jmp negCitire3
+		
+		endOfNegCitire3:
+			neg num3
+		jmp deltae
+		
+
+        deltae:
+            mov ax, num2
+            mov cx, num2			
+            mul cx ; 
+			mov delta, ax
+			mov ax, num1
+			mov cx, num3
+			mul cx
+			shl ax,1
+			shl ax,1
+			sub delta,ax
+			cmp delta,0
+			je nul
+			cmp delta,0
+			jl faraSol
+		jmp radical
+		
+		faraSol:
+			mov dx, offset msgFaraSol 
+			mov ah, 9  
+			int 21h
+		jmp amTerminat
+    
+		
+		radical: 
+			mov bx,2
+			mov cx,10
+			
+			repradical:
+            mov ax, delta
+            mov dx, 0
+            div bx 
+			
+            add ax, bx 
+            shr ax, 1 
+			
+            mov bx, ax 
+            mov rezultat, ax 
+	
+			dec cx
+			cmp cx,0
+			je radacina
+		jmp repradical
+          
+		
+		nul:
+
+			
+		 radacina:
+			mov dx,0
+			mov ax, rezultat
+			mov bx, num2
+			sub ax,bx
+			cmp ax,0
+			jl neg1
+			jmp dupa
+			neg1:
+				neg ax
+			dupa:
+			shr ax,1
+			mov bx, num1
+			div bx
+			cmp ax,0
+			jl neg2
+			jmp dupa2
+			neg2:
+				neg ax
+			dupa2:
+			mov x1, ax
+			mov ax,num2
+			neg ax
+			div bx
+			cmp ax, 0
+			jl neg4
+			jmp dupa4
+			neg4:
+				neg ax
+			dupa4:
+			sub ax, x1
+			cmp ax,0
+			jl neg3
+			jmp dupa3
+			neg3:
+				neg ax
+			dupa3:
+			mov x2,ax
+		
+		descompunereSol1:
+			mov cx, 10 
+			mov dx, offset msgSol1
+			mov ah, 9  
+			int 21h
+			repDescS1:
+            mov ax, x1
+            mov dx, 0
+            div cx
+            push dx
+
+            inc [nrcifre]
+            cmp ax, 0
+            je afisareSemn
+
+            mov x1, ax
+        jmp repDescS1
+		
+		afisareSemn:
+		mov dx,0
+			mov ax, num3
+			mov bx, num1
+			div bx
+			cmp ax,0
+			jg semnSuma
+		jmp afisarex1	
+		
+		semnSuma:
+			mov ax,num2
+			mov bx,num1
+			neg ax
+			cmp ax,0
+			jl afisareMinus			
+		jmp afisarex1
+			
+			afisareMinus:
+			afisareCaracter "-"
+		
+		
+		
+		afisarex1:
+			mov dx, 0
+            pop dx
+            add dl, 48
+            mov ah, 02h
+            int 21h
+
+            dec [nrcifre]
+            cmp nrcifre, 0
+            je descompunereSol2
+        jmp afisarex1
+		
+		descompunereSol2:
+			mov cx, 10 
+			
+			mov dx, offset msgSol2
+			mov ah, 9 
+			int 21h
+			repDescS2:
+            mov ax, x2
+            mov dx, 0
+            div cx
+            push dx
+
+            inc [nrcifre]
+            cmp ax, 0
+            je afisareSemn2
+
+            mov x2, ax
+        jmp repDescS2
+		
+		
+		afisareSemn2:
+		mov dx,0
+			mov ax, num3
+			mov bx, num1
+			div bx
+			cmp ax,0
+			jl afisareMinus2
+		jmp semnSuma2	
+		
+		semnSuma2:
+			mov ax,num2
+			mov bx,num1
+			neg ax
+			cmp ax,0
+			jl afisareMinus2		
+		jmp afisarex2
+			
+			afisareMinus2:
+			afisareCaracter "-"
+		
+		afisarex2:
+			mov dx, 0
+            pop dx
+            add dl, 48
+            mov ah, 02h
+            int 21h
+
+            dec [nrcifre]
+            cmp nrcifre, 0
+            je descompunereNumar
+        jmp afisarex2
+	
+			
+        descompunereNumar:
+			
+			mov cx, 10 
+			mov dx, offset msg5
+			mov ah, 9 
+			int 21h
+			repDesc:
+            mov ax, rezultat
+            mov dx, 0
+            div cx
+            push dx
+
+            inc [nrcifre]
+            cmp ax, 0
+            je afisareNumar
+
+            mov rezultat, ax
+        jmp repDesc
+		
+		
+        afisareNumar:
+            mov dx, 0
+            pop dx
+            add dl, 48
+            mov ah, 02h
+            int 21h
+
+            dec [nrcifre]
+            cmp nrcifre, 0
+            je amTerminat
+        jmp afisareNumar
+        
+        amTerminat:
+            mov ah, 4ch
+            int 21h
+    end main
